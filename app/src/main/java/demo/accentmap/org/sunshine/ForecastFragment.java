@@ -1,8 +1,11 @@
 package demo.accentmap.org.sunshine;
 
+import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -11,8 +14,10 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -58,7 +63,10 @@ public class ForecastFragment extends Fragment {
         if (id == R.id.action_refresh) {
 
             FetchWeatherTask weatherTask = new FetchWeatherTask();
-            weatherTask.execute("90210");
+
+            String location = PreferenceManager.getDefaultSharedPreferences(getActivity()).getString("location", "90210");
+            Log.i("ForecastFragment", "the location found in preferences is " + location);
+            weatherTask.execute(location);
             return true;
         }
         return super.onOptionsItemSelected(m);
@@ -83,6 +91,23 @@ public class ForecastFragment extends Fragment {
         mForecastAdapter = new ArrayAdapter<String>(getActivity(), R.layout.list_item_forecast, R.id.list_item_forecast_textview, weathers);
         ListView lv = (ListView) rootView.findViewById(R.id.listview_forecast);
         lv.setAdapter(mForecastAdapter);
+        lv.setOnItemClickListener(new AdapterView.OnItemClickListener(){
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                Context context = getActivity();
+                CharSequence text = mForecastAdapter.getItem(i);
+                int duration = Toast.LENGTH_SHORT;
+
+                //Toast toast = Toast.makeText(context, text, duration);
+                //toast.show();
+
+                Intent intent = new Intent(getActivity(), DetailActivity.class);
+
+                intent.putExtra(Intent.EXTRA_TEXT, mForecastAdapter.getItem(i));
+                startActivity(intent);
+            }
+
+        });
         return rootView;
     }
 
@@ -127,12 +152,12 @@ public class ForecastFragment extends Fragment {
         final String OWM_MIN = "min";
         final String OWM_DATETIME = "dt";
         final String OWM_DESCRIPTION = "main";
-
+        Log.i("ForecastFragment", forecastJsonStr);
         JSONObject forecastJson = new JSONObject(forecastJsonStr);
         JSONArray weatherArray = forecastJson.getJSONArray(OWM_LIST);
 
         String[] resultStrs = new String[numDays+1];
-        resultStrs[0] = "Weather Data for 90210";
+        resultStrs[0] = "Weather Data";
         for(int i = 0; i < weatherArray.length(); i++) {
             // For now, using the format "Day, description, hi/low"
             String day;
@@ -199,7 +224,6 @@ public class ForecastFragment extends Fragment {
                 // Construct the URL for the OpenWeatherMap query
                 // Possible parameters are avaiable at OWM's forecast API page, at
                 // http://openweathermap.org/API#forecast
-
                 Uri buildUri = Uri.parse("http://api.openweathermap.org/data/2.5/forecast/daily").buildUpon()
                         .appendQueryParameter(QUERY_PARAM, zipCode)
                         .appendQueryParameter(FORMAT_PARAM, "json")
