@@ -34,10 +34,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-/**
- * Created by czhang on 12/31/2014.
- */
-
 public class ForecastFragment extends Fragment {
     private ArrayAdapter<String> mForecastAdapter;
     public ForecastFragment() {
@@ -64,7 +60,7 @@ public class ForecastFragment extends Fragment {
     public void updateWeather() {
 
         FetchWeatherTask weatherTask = new FetchWeatherTask();
-        String location = PreferenceManager.getDefaultSharedPreferences(getActivity()).getString("location", "90210");
+        String location = PreferenceManager.getDefaultSharedPreferences(getActivity()).getString(getString(R.string.pref_location_key), "90210");
         Log.i("ForecastFragment", "the location found in preferences is " + location);
         weatherTask.execute(location);
     }
@@ -74,6 +70,20 @@ public class ForecastFragment extends Fragment {
         if (id == R.id.action_refresh) {
 
             updateWeather();
+            return true;
+        } else if (id ==R.id.action_view_location) {
+            Intent intent = new Intent(android.content.Intent.ACTION_VIEW);
+            String location = PreferenceManager.getDefaultSharedPreferences(getActivity()).getString(getString(R.string.pref_location_key), "90210");
+
+            Uri buildUri = Uri.parse("geo:0,0").buildUpon()
+                    .appendQueryParameter("q", location).build();
+            intent.setData(buildUri);
+            if (intent.resolveActivity(getActivity().getPackageManager()) != null) {
+                startActivity(intent);
+            } else {
+                Toast toast = Toast.makeText(getActivity(), "No Map App Available", Toast.LENGTH_SHORT);
+                toast.show();
+            }
             return true;
         }
         return super.onOptionsItemSelected(m);
@@ -130,9 +140,9 @@ public class ForecastFragment extends Fragment {
 
         String highLowStr = null;
         if (useMetric) {
-            highLowStr = roundedHigh + " C/" + roundedLow + "C";
+            highLowStr = roundedHigh + "C/" + roundedLow + "C";
         } else {
-            highLowStr = roundedHigh + " F/" + roundedLow + "F";
+            highLowStr = roundedHigh + "F/" + roundedLow + "F";
         }
         return highLowStr;
     }
@@ -270,7 +280,7 @@ public class ForecastFragment extends Fragment {
                     forecastJsonStr = null;
                 }
                 forecastJsonStr = buffer.toString();
-                String useMetric = PreferenceManager.getDefaultSharedPreferences(getActivity()).getString("units", "1");
+                String useMetric = PreferenceManager.getDefaultSharedPreferences(getActivity()).getString(getString(R.string.pref_units_key), "1");
 
                 boolean useMetricBool = false;
                 if (useMetric.equals("1")){

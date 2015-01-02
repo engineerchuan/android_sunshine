@@ -63,7 +63,6 @@ public class SettingsActivity extends PreferenceActivity
             // For other preferences, set the summary to the value's simple string representation.
             preference.setSummary(stringValue);
         }
-//        ForecastFragment.updateWeather();
         return true;
     }
 
