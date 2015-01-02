@@ -6,8 +6,15 @@
     <EditTextPreference
         android:title="Location"
         android:key="location"
-        android:defaultValue="02114"
+        android:defaultValue="Boston"
         android:inputType="text"
         android:singleLine="true"/>
+
+    <ListPreference
+        android:title="Units"
+        android:key="units"
+        android:defaultValue="1"
+        android:entries="@array/listentries"
+        android:entryValues="@array/listvalues"/>
 
 </PreferenceScreen>

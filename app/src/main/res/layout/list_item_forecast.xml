@@ -6,6 +6,6 @@
     android:minHeight="30dp"
     android:textAlignment="center"
     android:text="hi"
-    android:textSize="30dp">
+    android:textSize="20dp">
 
 </TextView>

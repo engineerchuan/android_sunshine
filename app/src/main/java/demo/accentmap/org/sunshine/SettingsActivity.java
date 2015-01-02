@@ -23,6 +23,8 @@ public class SettingsActivity extends PreferenceActivity
         // TODO: Add preferences from XML
         addPreferencesFromResource(R.xml.pref_general);
         bindPreferenceSummaryToValue(findPreference("location"));
+        bindPreferenceSummaryToValue(findPreference("units"));
+
         // For all preferences, attach an OnPreferenceChangeListener so the UI summary can be
         // updated when the preference changes.
         // TODO: Add preferences
@@ -61,6 +63,7 @@ public class SettingsActivity extends PreferenceActivity
             // For other preferences, set the summary to the value's simple string representation.
             preference.setSummary(stringValue);
         }
+//        ForecastFragment.updateWeather();
         return true;
     }
 

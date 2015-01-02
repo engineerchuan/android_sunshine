@@ -31,7 +31,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -42,6 +41,12 @@ import java.util.List;
 public class ForecastFragment extends Fragment {
     private ArrayAdapter<String> mForecastAdapter;
     public ForecastFragment() {
+    }
+    @Override
+    public void onStart() {
+
+        super.onStart();
+        updateWeather();
     }
 
     @Override
@@ -56,17 +61,19 @@ public class ForecastFragment extends Fragment {
 
         inflater.inflate(R.menu.forecastfragment, menu);
     }
+    public void updateWeather() {
 
+        FetchWeatherTask weatherTask = new FetchWeatherTask();
+        String location = PreferenceManager.getDefaultSharedPreferences(getActivity()).getString("location", "90210");
+        Log.i("ForecastFragment", "the location found in preferences is " + location);
+        weatherTask.execute(location);
+    }
     @Override
     public boolean onOptionsItemSelected(MenuItem m) {
         int id = m.getItemId();
         if (id == R.id.action_refresh) {
 
-            FetchWeatherTask weatherTask = new FetchWeatherTask();
-
-            String location = PreferenceManager.getDefaultSharedPreferences(getActivity()).getString("location", "90210");
-            Log.i("ForecastFragment", "the location found in preferences is " + location);
-            weatherTask.execute(location);
+            updateWeather();
             return true;
         }
         return super.onOptionsItemSelected(m);
@@ -77,16 +84,7 @@ public class ForecastFragment extends Fragment {
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
-        String[] forecastArray = {
-                "Weather for No Where",
-                "Today - Sunny - 88/63",
-                "Tomorrow - Foggy - 70/40",
-                "Wednesday - Cloudy - 72/63",
-                "Thursday - Asteroids - 75/65",
-                "Friday - TRAPPED - 66/43",
-                "Saturday - raining cats and dogs - 77/12"
-        };
-        List<String> weathers = new ArrayList<String>(Arrays.asList(forecastArray));
+        List<String> weathers = new ArrayList<String>();
 
         mForecastAdapter = new ArrayAdapter<String>(getActivity(), R.layout.list_item_forecast, R.id.list_item_forecast_textview, weathers);
         ListView lv = (ListView) rootView.findViewById(R.id.listview_forecast);
@@ -125,12 +123,17 @@ public class ForecastFragment extends Fragment {
     /**
      * Prepare the weather high/lows for presentation.
      */
-    private String formatHighLows(double high, double low) {
+    private String formatHighLows(double high, double low, boolean useMetric) {
         // For presentation, assume the user doesn't care about tenths of a degree.
         long roundedHigh = Math.round(high);
         long roundedLow = Math.round(low);
 
-        String highLowStr = roundedHigh + "/" + roundedLow;
+        String highLowStr = null;
+        if (useMetric) {
+            highLowStr = roundedHigh + " C/" + roundedLow + "C";
+        } else {
+            highLowStr = roundedHigh + " F/" + roundedLow + "F";
+        }
         return highLowStr;
     }
 
@@ -141,7 +144,7 @@ public class ForecastFragment extends Fragment {
      * Fortunately parsing is easy:  constructor takes the JSON string and converts it
      * into an Object hierarchy for us.
      */
-    private String[] getWeatherDataFromJson(String forecastJsonStr, int numDays)
+    private String[] getWeatherDataFromJson(String forecastJsonStr, int numDays, boolean useMetric)
             throws JSONException {
 
         // These are the names of the JSON objects that need to be extracted.
@@ -182,8 +185,12 @@ public class ForecastFragment extends Fragment {
             JSONObject temperatureObject = dayForecast.getJSONObject(OWM_TEMPERATURE);
             double high = temperatureObject.getDouble(OWM_MAX);
             double low = temperatureObject.getDouble(OWM_MIN);
+            if (!useMetric) {
+                high = high * 9.0/5.0 + 32.0;
+                low = low * 9.0/5.0 + 32.0;
+            }
 
-            highAndLow = formatHighLows(high, low);
+            highAndLow = formatHighLows(high, low, useMetric);
             resultStrs[i+1] = day + " - " + description + " - " + highAndLow;
         }
 
@@ -263,9 +270,16 @@ public class ForecastFragment extends Fragment {
                     forecastJsonStr = null;
                 }
                 forecastJsonStr = buffer.toString();
+                String useMetric = PreferenceManager.getDefaultSharedPreferences(getActivity()).getString("units", "1");
 
-                String[] results = getWeatherDataFromJson(forecastJsonStr, 7);
+                boolean useMetricBool = false;
+                if (useMetric.equals("1")){
+                    useMetricBool = true;
+                }
+                String[] results = getWeatherDataFromJson(forecastJsonStr, 7, useMetricBool);
                 Log.i("FetchWeatherTask", "Successfully downloaded data");
+                Log.i("FetchWeatherTask", "useMetricString is " + useMetric);
+                Log.i("FetchWeatherTask", "useMetric is " + useMetricBool);
                 return results;
             } catch (JSONException je) {
                 Log.e("FetchWeatherTask", "Error ", je);

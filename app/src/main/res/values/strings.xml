@@ -8,5 +8,9 @@
     <string name="action_refresh">Refresh</string>
     <string name="title_activity_detail">DetailActivity</string>
     <string name="title_activity_settings">SettingsActivity</string>
+    <string-array name="unitsarray">
+        <item>Imperial</item>
+        <item>Metric</item>
+    </string-array>
 
 </resources>
